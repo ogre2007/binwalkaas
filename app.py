@@ -12,10 +12,10 @@ def analyze_data(data, id):
 	with open(id, 'wb') as f:
 		f.write(data)
 	for module in binwalk.scan(id, signature=True):
-	    r += "%s Results:\n" % module.name
+	    r += "%s Results for %s:\n" % (module.name, id)
 	    for result in module.results:
-	        r += "\t%s    0x%.8X    %s\n" % (result.file.path, result.offset, result.description)
-	os.remove(sha256)
+	        r += "\t0x%.8X    %s\n" % (result.offset, result.description)
+	os.remove(id)
 	return r
 
 @app.route('/analyze', methods=['POST'])
