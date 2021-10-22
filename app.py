@@ -7,15 +7,15 @@ import os
 app = Flask(__name__)
 
 
-def analyze_data(data, sha256):
+def analyze_data(data, id):
 	r = ''
-	with open(sha256, 'wb') as f:
+	with open(id, 'wb') as f:
 		f.write(data)
-	for module in binwalk.scan(sha256, signature=True):
+	for module in binwalk.scan(id, signature=True):
 	    r += "%s Results:\n" % module.name
 	    for result in module.results:
 	        r += "\t%s    0x%.8X    %s\n" % (result.file.path, result.offset, result.description)
-	#os.remove(sha256)
+	os.remove(sha256)
 	return r
 
 @app.route('/analyze', methods=['POST'])
@@ -26,7 +26,7 @@ def upload_and_analyze():
             return BadRequest('No file part')
         file = request.files['file']
         if file:
-            result = analyze_data(file.read(), request.args['sha256'])
+            result = analyze_data(file.read(), request.args['id'])
 
             return (result, 200)
 
