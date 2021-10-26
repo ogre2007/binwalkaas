@@ -22,8 +22,8 @@ def analyze(data, sha256=''):
 	ret = ''
 	with open(sha256, 'wb') as f:
 		f.write(data)
-	for module in binwalk.scan(id, signature=True):
-	    ret += "%s Results for %s:\n" % (module.name, id)
+	for module in binwalk.scan(sha256, signature=True):
+	    ret += "%s Results for %s:\n" % (module.name, sha256)
 	    for result in module.results:
 	        ret += "\t0x%.8X    %s\n" % (result.offset, result.description)
 	os.remove(sha256)
@@ -44,16 +44,19 @@ def upload():
 @app.route('/analyze')
 def analyze_route():
 	sha256 = request.args.get('id')
+	results = r.hget(sha256, 'results')
+	if results:
+		return (results, 200)
+	
 	try:
-		return (r.hget(sha256, 'results'), 200)
-	except:
-		try:
-			results = analyze_data(load_from_db(sha256), sha256)
-			r.hset(sha256, 'results', results)
-			return (results, 200)
-		except Exception as e:
-			print(f'{sha256} blob not found or {e}')
-			return (f'{sha256} blob not found or {e}', 404)			
+		results = analyze(load_from_db(sha256), sha256)
+		r.hset(sha256, 'results', results)
+		return (results, 200)
+	except Exception as e:
+		print(f'{sha256}: {e}')
+		raise e
+		return (f'{sha256} blob not found or {e}', 404)
+
 
 if __name__ == '__main__':
     
